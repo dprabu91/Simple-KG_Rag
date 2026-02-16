@@ -1,193 +1,224 @@
-# Knowledge Graph RAG Application
+# Hybrid RAG - Knowledge Graph + Vector Search
 
-A Python-based application that extracts knowledge from FAQ documents, builds a knowledge graph using Neo4j, and enables intelligent retrieval-augmented generation (RAG) queries using OpenAI's language models.
+A powerful **Hybrid Retrieval-Augmented Generation (RAG)** system that combines graph-based knowledge extraction with semantic vector search to answer questions with rich contextual understanding.
 
-## Overview
+## 🎯 Overview
 
-This project demonstrates a modern approach to knowledge management by:
-1. **Extracting** entities and relationships from FAQ documents using LLM
-2. **Storing** the knowledge graph in Neo4j for efficient querying
-3. **Retrieving** relevant context from the graph
-4. **Generating** intelligent responses using OpenAI's GPT models
+This system processes FAQ documents and builds two complementary knowledge representations:
 
-## Features
+1. **Knowledge Graph** (Neo4j) - Extracts entities and relationships for structured reasoning
+2. **Vector Store** (Embeddings) - Stores semantic representations for similarity-based retrieval
 
-- **Document Processing**: Loads and chunks FAQ documents
-- **Entity & Relation Extraction**: Uses LLM (GPT-4) to automatically extract structured knowledge
-- **Knowledge Graph Storage**: Stores extracted entities and relationships in Neo4j
-- **Smart Retrieval**: Queries the knowledge graph to find relevant context
-- **RAG Integration**: Combines retrieved knowledge with LLM for enhanced Q&A
+When you ask a question, both approaches are combined to provide comprehensive answers grounded in the original document.
 
-## Project Structure
+## 🏗️ Architecture
 
 ```
-.
-├── app.py                 # Main application code
-├── faq.txt               # FAQ document source
-├── vector_store.json     # Embeddings storage
-├── .env                  # Environment variables (create this)
-└── README.md            # This file
+FAQ Document (faq.txt)
+    ↓
+┌─────────────────────────────────────────┐
+│   Entity & Relation Extraction (LLM)    │
+└─────┬─────────────────────────────┬─────┘
+      ↓                             ↓
+  Neo4j Graph              Vector Store (JSON)
+  - Entities               - Embeddings
+  - Relations              - Chunks
+      │                             │
+      └──────────┬──────────────────┘
+                 ↓
+          Hybrid Context
+                 ↓
+            LLM Answer
 ```
 
-## Prerequisites
+## 📋 Features
 
+- **Automatic Entity Extraction** - Uses GPT-4 to identify entities and their relationships
+- **Knowledge Graph Storage** - Maintains structured data in Neo4j
+- **Semantic Search** - Similarity-based retrieval using embeddings
+- **Hybrid Context** - Combines graph facts and semantic matches for comprehensive answers
+- **Interactive Q&A** - Command-line interface for asking questions about your knowledge base
+
+## 🛠️ Requirements
+
+### Dependencies
 - Python 3.8+
-- Neo4j Database (local or cloud instance)
-- OpenAI API key
+- `openai` - For LLM and embeddings
+- `neo4j` - For graph database
+- `python-dotenv` - For environment variables
+- `numpy` - For vector operations
 
-## Installation
+### External Services
+- OpenAI API key (for GPT-4o-mini and embeddings)
+- Neo4j database instance (running locally or remote)
 
-1. **Clone or setup the project**
+## 📦 Installation
+
+### Setup Neo4j Database (Free)
+
+1. Go to [neo4j.com/cloud/aura-free](https://neo4j.com/cloud/aura-free)
+2. Sign up and create an AuraDB Free instance
+3. Save your **URI**, **Username**, and **Password** (you'll need these in environment variables)
+
+### Install Project
+
+1. **Clone/setup the project**
    ```bash
-   cd KG_RAG_Nodej
+   cd Hybrid_RAG
    ```
 
 2. **Install dependencies**
    ```bash
-   pip install openai neo4j python-dotenv
+   pip install openai neo4j python-dotenv numpy
    ```
 
-3. **Create `.env` file** with your credentials:
-   ```
-   OPENAI_API_KEY=your_openai_api_key
+3. **Configure environment variables** - Create `.env` file:
+   ```env
+   OPENAI_API_KEY=sk-...
    NEO4J_URI=bolt://localhost:7687
    NEO4J_USERNAME=neo4j
-   NEO4J_PASSWORD=your_neo4j_password
+   NEO4J_PASSWORD=password
    ```
 
-## Usage
+4. **Prepare your FAQ** - Edit `faq.txt` with your knowledge base content (separate chunks with blank lines)
 
-Run the application:
+## 🚀 Usage
+
+### Run the pipeline
 ```bash
 python app.py
 ```
 
-### How it Works
+This will:
+1. Load FAQ chunks from `faq.txt`
+2. Extract entities and relationships using GPT-4o-mini
+3. Store knowledge graph in Neo4j
+4. Build vector store with embeddings
+5. Start interactive Q&A session
 
-**Step 1: Load FAQ Document**
-- Reads `faq.txt` and splits it into Q&A pairs
-- Each pair becomes a chunk for processing
-
-**Step 2: Extract Knowledge**
-- Uses GPT-4o-mini to extract entities (concepts, technologies, people)
-- Identifies relationships between entities (SUBSET_OF, CREATED_BY, etc.)
-- Returns structured JSON with entities and relations
-
-**Step 3: Store in Neo4j**
-- Clears existing data
-- Creates nodes for each entity
-- Creates relationships to connect entities
-- Enables graph traversal and pattern matching
-
-**Step 4: Retrieve & Generate**
-- Queries the graph for relevant entities and relationships
-- Constructs context from retrieved knowledge
-- Generates answers using the LLM with enhanced context
-
-## Key Components
-
-### `load_faq(path)`
-Loads and chunks FAQ documents from a text file.
-
-### `extract(chunk)`
-Extracts entities and relationships from text using LLM.
-- **Input**: Text chunk
-- **Output**: JSON with entities and relations
-
-### `store(entities, relations)`
-Stores extracted knowledge in Neo4j.
-- Creates entity nodes with properties
-- Creates relationship edges between entities
-
-### `retrieve(query)`
-Searches the knowledge graph for relevant information.
-
-### `generate(query)`
-Generates answers using retrieved context from the knowledge graph.
-
-## Data Sample
-
-The application comes with a sample FAQ covering:
-- Artificial Intelligence
-- Machine Learning
-- Deep Learning
-- Natural Language Processing (NLP)
-- Knowledge Graphs
-
-Topics include key researchers, frameworks, and companies in AI/ML.
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `OPENAI_API_KEY` | Your OpenAI API key | sk-... |
-| `NEO4J_URI` | Neo4j database URI | bolt://localhost:7687 |
-| `NEO4J_USERNAME` | Neo4j username | neo4j |
-| `NEO4J_PASSWORD` | Neo4j password | your_password |
-
-### LLM Settings
-
-- **Model**: gpt-4o-mini
-- **Temperature**: 0 (deterministic extraction)
-- **Max tokens**: Default
-
-## Example Query Flow
-
+### Example Interaction
 ```
-User: "Tell me about Machine Learning"
-    ↓
-[Retrieve relevant entities and relationships from Neo4j]
-    ↓
-[LLM generates answer using retrieved context]
-    ↓
-Response: "Machine Learning is a subset of AI..."
+❓ Question: What is machine learning?
+
+💡 Machine learning is a subset of AI that enables systems 
+to learn from data without explicit programming...
 ```
 
-## Knowledge Graph Schema
+## � See Your Graph
 
-### Entities
-- **CONCEPT**: AI, Machine Learning, Deep Learning, NLP
-- **PERSON**: Alan Turing, Geoffrey Hinton, Yann LeCun
-- **ORGANIZATION**: OpenAI, Google DeepMind, Google, Meta
-- **TECHNOLOGY**: TensorFlow, PyTorch, BERT, GPT
-- **DATE**: 1950, 2012
+Open **Neo4j Browser** and run this query to visualize your knowledge graph:
 
-### Relations
-- `SUBSET_OF`: X is a subset of Y
-- `CREATED_BY`: Created by a person/organization
-- `USES`: System X uses technology Y
-- `DEVELOPED_BY`: Framework developed by organization
-- `INTRODUCED_IN`: Concept introduced in year Y
+```cypher
+MATCH (n)-[r]->(m) RETURN n, r, m
+```
 
-## Troubleshooting
+You'll see something like:
 
-### Neo4j Connection Issues
-- Verify Neo4j is running
-- Check connection URI and credentials
-- Ensure firewall allows port 7687
+```
+(AI) ←──SUBSET_OF── (Machine Learning) ←──SUBSET_OF── (Deep Learning)
+ │                          │
+ CREATED_BY              USED_IN
+ │                          │
+ ▼                          ▼
+(Alan Turing)           (TensorFlow)──CREATED_BY──▶(Google)
+```
 
-### OpenAI API Errors
-- Verify API key is correct
-- Check API quota and billing
-- Ensure model exists (gpt-4o-mini)
+This shows all entities and their relationships extracted from your FAQ.
 
-### Extraction Failures
-- Review input text format
-- Check for malformed JSON in LLM responses
-- Verify LLM is returning valid JSON
+## �📂 File Structure
 
-## License
+| File | Purpose |
+|------|---------|
+| `app.py` | Main application with all RAG components |
+| `faq.txt` | Input knowledge base (FAQ documents) |
+| `vector_store.json` | Persisted vector embeddings |
+| `.env` | Environment variables (create this) |
 
-MIT License
+## 🔄 Pipeline Stages
 
-## Contributors
+### 1. Document Loading
+Reads and chunks FAQ text, separating by blank lines.
 
-Created as a demonstration of Knowledge Graph + RAG patterns.
+### 2. Entity Extraction
+Uses LLM to extract structured entities and relationships from each chunk:
+```json
+{
+  "entities": [{"name": "AI", "type": "CONCEPT"}],
+  "relations": [{"source": "ML", "relation": "SUBSET_OF", "target": "AI"}]
+}
+```
 
-## Resources
+### 3. Graph Storage
+Stores unique entities and relationships in Neo4j knowledge graph.
 
-- [Neo4j Documentation](https://neo4j.com/docs/)
-- [OpenAI API Reference](https://platform.openai.com/docs/)
-- [RAG Concepts](https://en.wikipedia.org/wiki/Retrieval-augmented_generation)
+### 4. Vector Embeddings
+- Embeds each chunk using `text-embedding-3-small`
+- Stores in `vector_store.json` with original text
+
+### 5. Hybrid Context Retrieval
+For each question:
+- **Graph Search** - Finds relevant entities and their connections
+- **Vector Search** - Finds semantically similar chunks (top-3)
+
+### 6. Answer Generation
+Combines both contexts and uses GPT-4o-mini to generate coherent answers.
+
+## ⚙️ Configuration
+
+### Models Used
+- **LLM**: `gpt-4o-mini` - Fast extraction and generation
+- **Embeddings**: `text-embedding-3-small` - Efficient semantic search
+- **Graph DB**: Neo4j - Relationship queries
+
+### Tunable Parameters
+In `app.py`:
+- `top_k=3` - Number of vector results to include (line ~183)
+- `temperature=0.3` - Answer generation temperature (line ~211)
+- `temperature=0` - Entity extraction strictness (line ~54, 102)
+
+## 🔍 How It Works
+
+### Knowledge Graph Search
+1. Extracts keywords from question
+2. Queries Neo4j for matching entities
+3. Returns entity types and connected relationships
+
+### Vector Search
+1. Embeds the question
+2. Calculates cosine similarity with all stored embeddings
+3. Returns top-k most similar chunks
+
+### Hybrid Answering
+- Prefers graph facts if conflict exists
+- Uses semantic context to fill gaps
+- Maintains coherent narrative
+
+## 🐛 Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| OpenAI API errors | Check `OPENAI_API_KEY` in `.env` |
+| Neo4j connection failed | Verify URI, username, password in `.env` |
+| JSON parse errors | Check LLM extraction output format |
+| Vector store not found | Rebuild by running `app.py` first |
+
+## 📈 Performance Tips
+
+- Start with smaller FAQ (10-50 chunks) for testing
+- Increase chunks gradually to avoid API rate limits
+- Cache embeddings in `vector_store.json` (only regenerate when FAQ changes)
+- Adjust `top_k` based on context window needs
+
+## 🔐 Security
+
+- Keep `.env` file private (add to `.gitignore`)
+- Don't commit API keys to version control
+- Use restricted Neo4j credentials in production
+
+## 📝 License
+
+This project is provided as-is for educational and commercial use.
+
+---
+
+**Questions?** Check the code comments in `app.py` for detailed implementation notes.
