@@ -1,175 +1,193 @@
-# 🧠 Simple Knowledge Graph RAG with Neo4j
+# Knowledge Graph RAG Application
 
-Load a FAQ file → Extract entities & relations → Store in Neo4j → Ask questions with AI
+A Python-based application that extracts knowledge from FAQ documents, builds a knowledge graph using Neo4j, and enables intelligent retrieval-augmented generation (RAG) queries using OpenAI's language models.
 
----
+## Overview
 
-## 🔄 How It Works
+This project demonstrates a modern approach to knowledge management by:
+1. **Extracting** entities and relationships from FAQ documents using LLM
+2. **Storing** the knowledge graph in Neo4j for efficient querying
+3. **Retrieving** relevant context from the graph
+4. **Generating** intelligent responses using OpenAI's GPT models
 
-FAQ.txt → LLM extracts entities & relations → Stored in Neo4j → Ask questions → AI answers!
+## Features
 
+- **Document Processing**: Loads and chunks FAQ documents
+- **Entity & Relation Extraction**: Uses LLM (GPT-4) to automatically extract structured knowledge
+- **Knowledge Graph Storage**: Stores extracted entities and relationships in Neo4j
+- **Smart Retrieval**: Queries the knowledge graph to find relevant context
+- **RAG Integration**: Combines retrieved knowledge with LLM for enhanced Q&A
 
----
+## Project Structure
 
-## ⚡ Quick Setup (5 Minutes)
+```
+.
+├── app.py                 # Main application code
+├── faq.txt               # FAQ document source
+├── vector_store.json     # Embeddings storage
+├── .env                  # Environment variables (create this)
+└── README.md            # This file
+```
 
-### 1️⃣ Create Neo4j Database (Free)
+## Prerequisites
 
-1. Go to https://neo4j.com/cloud/aura-free  
-2. Sign up → Create **AuraDB Free** instance  
-3. Save:
-   - URI  
-   - Username  
-   - Password  
+- Python 3.8+
+- Neo4j Database (local or cloud instance)
+- OpenAI API key
 
----
+## Installation
 
-### 2️⃣ Create Project
+1. **Clone or setup the project**
+   ```bash
+   cd KG_RAG_Nodej
+   ```
 
+2. **Install dependencies**
+   ```bash
+   pip install openai neo4j python-dotenv
+   ```
+
+3. **Create `.env` file** with your credentials:
+   ```
+   OPENAI_API_KEY=your_openai_api_key
+   NEO4J_URI=bolt://localhost:7687
+   NEO4J_USERNAME=neo4j
+   NEO4J_PASSWORD=your_neo4j_password
+   ```
+
+## Usage
+
+Run the application:
 ```bash
-mkdir kg-rag && cd kg-rag
-python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
-
-3️⃣ Install Dependencies
-pip install openai neo4j python-dotenv numpy
-
-4️⃣ Create .env File
-
-OPENAI_API_KEY=sk-your-key-here
-NEO4J_URI=neo4j+s://xxxxx.databases.neo4j.io
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=your-password
-
-5️⃣ Add FAQ Data
-Create a file named faq.txt:
-
-Q: What is AI?
-A: Artificial Intelligence is a branch of computer science created by Alan Turing in 1950. Major labs include OpenAI, Google DeepMind, and Anthropic.
-
-Q: What is Machine Learning?
-A: Machine Learning is a subset of AI that learns from data. Popular frameworks include TensorFlow by Google and PyTorch by Meta.
-
-Q: What is Deep Learning?
-A: Deep Learning is a subset of Machine Learning using neural networks. Pioneers include Geoffrey Hinton and Yann LeCun. It powers image recognition and language models.
-
-Q: What is NLP?
-A: Natural Language Processing is a field of AI for human-computer language interaction. Key models include BERT by Google and GPT by OpenAI.
-
-Q: What is a Knowledge Graph?
-A: A Knowledge Graph stores entities and their relationships. Google introduced it in 2012. Neo4j is the most popular graph database for building them.
-
-6️⃣ Run the Application
 python app.py
+```
 
-💬 Example Usage
-❓ Question: What is Machine Learning?
+### How it Works
 
-💡 Machine Learning is a subset of Artificial Intelligence that learns patterns from data.
+**Step 1: Load FAQ Document**
+- Reads `faq.txt` and splits it into Q&A pairs
+- Each pair becomes a chunk for processing
 
-🖼️ See Your Graph
+**Step 2: Extract Knowledge**
+- Uses GPT-4o-mini to extract entities (concepts, technologies, people)
+- Identifies relationships between entities (SUBSET_OF, CREATED_BY, etc.)
+- Returns structured JSON with entities and relations
 
-Open Neo4j Browser and run:
+**Step 3: Store in Neo4j**
+- Clears existing data
+- Creates nodes for each entity
+- Creates relationships to connect entities
+- Enables graph traversal and pattern matching
 
-MATCH (n)-[r]->(m) RETURN n, r, m
-You'll see something like:
+**Step 4: Retrieve & Generate**
+- Queries the graph for relevant entities and relationships
+- Constructs context from retrieved knowledge
+- Generates answers using the LLM with enhanced context
 
-(AI) ←──SUBSET_OF── (Machine Learning) ←──SUBSET_OF── (Deep Learning)
- │                          │
- CREATED_BY              USED_IN
- │                          │
- ▼                          ▼
-(Alan Turing)           (TensorFlow)──CREATED_BY──▶(Google)
+## Key Components
 
-🧩 How Each Step Works
-Step	What It Does	One-Line Explanation
-Load	Read faq.txt	Split FAQ into chunks by Q&A pairs
-Extract	LLM reads each chunk	Returns entities (nouns) + relations (connections)
-Store	Push to Neo4j	Creates nodes + edges in the graph database
-Query	User asks question	Find matching graph nodes → send context to LLM → get answer
+### `load_faq(path)`
+Loads and chunks FAQ documents from a text file.
 
-What is RAG?
-Without RAG:  Question → LLM → Answer (guesses from training data)
-With RAG:     Question → Search Database → LLM + Context → Accurate Answer ✅
+### `extract(chunk)`
+Extracts entities and relationships from text using LLM.
+- **Input**: Text chunk
+- **Output**: JSON with entities and relations
 
-🛠️ Troubleshooting
-Problem	Fix
-Connection refused	Check Neo4j is running + correct URI in .env
-AuthError	Double-check Neo4j password in .env
-openai.AuthenticationError	Check your OpenAI API key
-Empty results	Make sure you ran the build phase first
-🚀
+### `store(entities, relations)`
+Stores extracted knowledge in Neo4j.
+- Creates entity nodes with properties
+- Creates relationship edges between entities
 
-🏗 Architecture
-User Question
-   │
-   ├── Neo4j Knowledge Graph (Facts & Relations)
-   ├── Vector Search (Semantic Similarity)
-   │
-   └── LLM Answer Synthesis
+### `retrieve(query)`
+Searches the knowledge graph for relevant information.
 
-🚀 Features
-✅ Knowledge Graph RAG
+### `generate(query)`
+Generates answers using retrieved context from the knowledge graph.
 
-✅ Neo4j entity relationships
+## Data Sample
 
-✅ Hybrid Graph + Vector RAG
+The application comes with a sample FAQ covering:
+- Artificial Intelligence
+- Machine Learning
+- Deep Learning
+- Natural Language Processing (NLP)
+- Knowledge Graphs
 
-✅ Hallucination-resistant answers
+Topics include key researchers, frameworks, and companies in AI/ML.
 
-✅ Simple & extensible design
+## Configuration
 
+### Environment Variables
 
-🧠 Tech Stack
-OpenAI GPT
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `OPENAI_API_KEY` | Your OpenAI API key | sk-... |
+| `NEO4J_URI` | Neo4j database URI | bolt://localhost:7687 |
+| `NEO4J_USERNAME` | Neo4j username | neo4j |
+| `NEO4J_PASSWORD` | Neo4j password | your_password |
 
-Neo4j AuraDB
+### LLM Settings
 
-Python
+- **Model**: gpt-4o-mini
+- **Temperature**: 0 (deterministic extraction)
+- **Max tokens**: Default
 
-Vector Embeddings
+## Example Query Flow
 
-Hybrid RAG
+```
+User: "Tell me about Machine Learning"
+    ↓
+[Retrieve relevant entities and relationships from Neo4j]
+    ↓
+[LLM generates answer using retrieved context]
+    ↓
+Response: "Machine Learning is a subset of AI..."
+```
 
-📌 Future Improvements
-🔹 Neo4j Vector Index
+## Knowledge Graph Schema
 
-🔹 FAISS integration
+### Entities
+- **CONCEPT**: AI, Machine Learning, Deep Learning, NLP
+- **PERSON**: Alan Turing, Geoffrey Hinton, Yann LeCun
+- **ORGANIZATION**: OpenAI, Google DeepMind, Google, Meta
+- **TECHNOLOGY**: TensorFlow, PyTorch, BERT, GPT
+- **DATE**: 1950, 2012
 
-🔹 API / Streamlit UI
+### Relations
+- `SUBSET_OF`: X is a subset of Y
+- `CREATED_BY`: Created by a person/organization
+- `USES`: System X uses technology Y
+- `DEVELOPED_BY`: Framework developed by organization
+- `INTRODUCED_IN`: Concept introduced in year Y
 
-🔹 Answer confidence scoring
+## Troubleshooting
 
-🔹 RAG evaluation metrics
+### Neo4j Connection Issues
+- Verify Neo4j is running
+- Check connection URI and credentials
+- Ensure firewall allows port 7687
 
-⭐ If You Like This Project
-Give it a ⭐ on GitHub and feel free to fork & improve!
+### OpenAI API Errors
+- Verify API key is correct
+- Check API quota and billing
+- Ensure model exists (gpt-4o-mini)
 
+### Extraction Failures
+- Review input text format
+- Check for malformed JSON in LLM responses
+- Verify LLM is returning valid JSON
 
----
+## License
 
-## 3️⃣ Why This Looks Like Your Screenshot
+MIT License
 
-| Feature | How |
-|------|----|
-Big title with emoji | `# 🧠 Title` |
-Divider lines | `---` |
-Code blocks | ``` |
-Clickable links | Plain URLs |
-Sections | `## Heading` |
-Icons | Emojis (🚀 ⚡ 🧠) |
+## Contributors
 
-GitHub **automatically renders** everything — no CSS needed.
+Created as a demonstration of Knowledge Graph + RAG patterns.
 
----
+## Resources
 
-## 4️⃣ Optional: Make It Even Better 🔥
-
-If you want, I can:
-- Add **badges** (stars, license, python version)
-- Add **architecture diagram (Mermaid)**
-- Write **enterprise-level README**
-- Optimize for **GitHub stars & SEO**
-- Align it perfectly with **Hybrid RAG branding**
-
-Just say **“enhance README”** and I’ll do it 🚀
+- [Neo4j Documentation](https://neo4j.com/docs/)
+- [OpenAI API Reference](https://platform.openai.com/docs/)
+- [RAG Concepts](https://en.wikipedia.org/wiki/Retrieval-augmented_generation)
